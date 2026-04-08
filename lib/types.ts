@@ -1,28 +1,37 @@
-// Types voor Begrijpend Lezen Oefeningen
+// Types voor Rekenen Oefeningen
 
-export type QuestionType = 'multiple-choice' | 'true-false' | 'fill-blank' | 'open-question';
+export type ExerciseType = 'addition' | 'subtraction' | 'multiplication' | 'division' | 'mixed' | 'word-problem';
 export type GradeLevel = 'group-3' | 'group-4' | 'group-5' | 'group-6' | 'group-7' | 'group-8';
 export type Difficulty = 'easy' | 'medium' | 'hard';
 
 export interface Exercise {
   id: string;
   title: string;
-  textPassage: string;
+  description: string;
+  exerciseType: ExerciseType;
   gradeLevel: GradeLevel;
   difficulty: Difficulty;
   topic: string;
-  questions: Question[];
+  originalProblem: string;
+  variations: ExerciseVariation[];
   estimatedTime: number;
+  sourceFile?: string; // PDF filename if from upload
   createdAt: Date;
   updatedAt: Date;
 }
 
-export interface Question {
+export interface ExerciseVariation {
   id: string;
-  type: QuestionType;
-  questionText: string;
-  options?: string[];
-  correctAnswer: string | string[];
+  problem: string;
+  correctAnswer: string | number;
   explanation?: string;
   hints?: string[];
+  workSteps?: string[]; // Step-by-step solution
+}
+
+export interface PDFUploadResult {
+  fileName: string;
+  exercises: Exercise[];
+  totalExtracted: number;
+  createdAt: Date;
 }
