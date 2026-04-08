@@ -15,9 +15,15 @@ interface Exercise {
   variations?: Array<{ id: string }>;
 }
 
+interface Stats {
+  totalExercises: number;
+  totalVariations: number;
+  exerciseTypes: string[];
+}
+
 export default function Home() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
-  const [stats, setStats] = useState({ totalExercises: 0, totalVariations: 0, exerciseTypes: [] });
+  const [stats, setStats] = useState<Stats>({ totalExercises: 0, totalVariations: 0, exerciseTypes: [] });
   const [uploading, setUploading] = useState(false);
   const [uploadMessage, setUploadMessage] = useState('');
   const [loading, setLoading] = useState(true);
