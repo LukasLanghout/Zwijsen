@@ -164,7 +164,8 @@ export function deleteExercise(id: string): boolean {
 }
 
 export function getStats() {
-  const types = [...new Set(exercises.map(e => e.exerciseType))];
+  const typeSet = new Set(exercises.map(e => e.exerciseType));
+  const types = Array.from(typeSet);
   return {
     totalExercises: exercises.length,
     totalVariations: exercises.reduce((sum, e) => sum + e.variations.length, 0),
