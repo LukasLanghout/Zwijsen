@@ -1,8 +1,26 @@
 'use client';
 
-import { getExerciseById } from '@/lib/db';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
+interface Variation {
+  id: string;
+  problem: string;
+  correct_answer: string;
+  explanation: string | null;
+  hints: string[];
+  workSteps: string[];
+}
+
+interface Exercise {
+  id: string;
+  title: string;
+  description: string | null;
+  exercise_type: string;
+  grade_level: string;
+  difficulty: string;
+  variations: Variation[];
+}
 
 interface ExercisePageProps {
   params: {
@@ -11,11 +29,40 @@ interface ExercisePageProps {
 }
 
 export default function ExercisePage({ params }: ExercisePageProps) {
-  const exercise = getExerciseById(params.id);
+  const [exercise, setExercise] = useState<Exercise | null>(null);
+  const [loading, setLoading] = useState(true);
   const [currentVariation, setCurrentVariation] = useState(0);
   const [userAnswer, setUserAnswer] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [score, setScore] = useState(0);
+
+  useEffect(() => {
+    const fetchExercise = async () => {
+      try {
+        const response = await fetch(`/api/exercises/${params.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setExercise(data.exercise || data);
+        }
+      } catch (error) {
+        console.error('Error fetching exercise:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchExercise();
+  }, [params.id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 py-12 text-center">
+          <p className="text-xl text-gray-600">Oefening laden...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!exercise) {
     return (
@@ -31,7 +78,7 @@ export default function ExercisePage({ params }: ExercisePageProps) {
   }
 
   const variation = exercise.variations[currentVariation];
-  const isCorrect = parseInt(userAnswer) === variation.correctAnswer || userAnswer === String(variation.correctAnswer);
+  const isCorrect = parseInt(userAnswer) === parseInt(variation.correct_answer) || userAnswer === String(variation.correct_answer);
 
   const handleSubmit = () => {
     if (userAnswer.trim()) {
@@ -68,10 +115,10 @@ export default function ExercisePage({ params }: ExercisePageProps) {
 
           <div className="flex flex-wrap gap-2">
             <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold">
-              {exercise.gradeLevel.replace('group-', 'Groep ')}
+              {exercise.grade_level.replace('group-', 'Groep ')}
             </span>
             <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold">
-              {exercise.exerciseType}
+              {exercise.exercise_type}
             </span>
             <span
               className={`px-3 py-1 rounded-full text-sm font-semibold text-white ${
@@ -173,7 +220,7 @@ export default function ExercisePage({ params }: ExercisePageProps) {
                 >
                   {isCorrect
                     ? `Je antwoord ${userAnswer} is juist!`
-                    : `Het juiste antwoord is ${variation.correctAnswer}`}
+                    : `Het juiste antwoord is ${variation.correct_answer}`}
                 </p>
               </div>
 

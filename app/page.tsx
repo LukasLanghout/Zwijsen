@@ -1,14 +1,54 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
-import { getExercises, getStats } from '@/lib/db';
+import { useState, useEffect } from 'react';
+
+interface Exercise {
+  id: string;
+  title: string;
+  description: string | null;
+  exercise_type: string;
+  grade_level: string;
+  difficulty: string;
+  estimated_time: number;
+  source_file: string | null;
+  variations?: Array<{ id: string }>;
+}
 
 export default function Home() {
-  const exercises = getExercises();
-  const stats = getStats();
+  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [stats, setStats] = useState({ totalExercises: 0, totalVariations: 0, exerciseTypes: [] });
   const [uploading, setUploading] = useState(false);
   const [uploadMessage, setUploadMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchExercises = async () => {
+      try {
+        const response = await fetch('/api/exercises');
+        if (response.ok) {
+          const data = await response.json();
+          const exercisesList = data.exercises || [];
+          setExercises(exercisesList);
+
+          // Calculate stats
+          const uniqueTypes = new Set(exercisesList.map((e: Exercise) => e.exercise_type));
+          const totalVars = exercisesList.reduce((sum: number, e: Exercise) => sum + (e.variations?.length || 0), 0);
+          setStats({
+            totalExercises: exercisesList.length,
+            totalVariations: totalVars,
+            exerciseTypes: Array.from(uniqueTypes)
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching exercises:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchExercises();
+  }, []);
 
   const handlePDFUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -32,12 +72,26 @@ export default function Home() {
 
       const data = await response.json();
       setUploadMessage(
-        `✅ ${data.totalExtracted} oefeningen geëxtraheerd! Page vernieuwt...`
+        `✅ ${data.totalExtracted} oefeningen geëxtraheerd! Laden...`
       );
 
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
+      // Refetch exercises after upload
+      setTimeout(async () => {
+        const response = await fetch('/api/exercises');
+        if (response.ok) {
+          const newData = await response.json();
+          const exercisesList = newData.exercises || [];
+          setExercises(exercisesList);
+          const uniqueTypes = new Set(exercisesList.map((e: Exercise) => e.exercise_type));
+          const totalVars = exercisesList.reduce((sum: number, e: Exercise) => sum + (e.variations?.length || 0), 0);
+          setStats({
+            totalExercises: exercisesList.length,
+            totalVariations: totalVars,
+            exerciseTypes: Array.from(uniqueTypes)
+          });
+          setUploadMessage('');
+        }
+      }, 1000);
     } catch (error) {
       setUploadMessage('❌ Upload mislukt. Probeer het opnieuw.');
     } finally {
@@ -121,75 +175,86 @@ export default function Home() {
         {/* Exercises */}
         <div>
           <h2 className="text-3xl font-bold text-gray-900 mb-8">✨ Oefeningen</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {exercises.map((exercise, idx) => {
-              const pastelColors = [
-                { bg: '#B3E5FC', border: '#0099CC' },
-                { bg: '#FFB3D9', border: '#C41E3A' },
-                { bg: '#FFCB9A', border: '#FF9800' },
-                { bg: '#C8E6C9', border: '#7CB342' }
-              ];
-              const color = pastelColors[idx % pastelColors.length];
-              return (
-              <Link
-                key={exercise.id}
-                href={`/oefening/${exercise.id}`}
-                className="rounded-2xl shadow-gentle hover:shadow-medium transition overflow-hidden group"
-                style={{ backgroundColor: color.bg }}
-              >
-                <div className="h-4" style={{ backgroundColor: color.border }}></div>
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-gray-900 group-hover:text-green-600 transition mb-2">
-                    {exercise.title}
-                  </h3>
+          {loading ? (
+            <div className="text-center py-12">
+              <p className="text-gray-600 text-lg">Oefeningen laden...</p>
+            </div>
+          ) : exercises.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-2xl">
+              <p className="text-gray-600 text-lg">Nog geen oefeningen. Upload een PDF om te starten!</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {exercises.map((exercise, idx) => {
+                const pastelColors = [
+                  { bg: '#B3E5FC', border: '#0099CC' },
+                  { bg: '#FFB3D9', border: '#C41E3A' },
+                  { bg: '#FFCB9A', border: '#FF9800' },
+                  { bg: '#C8E6C9', border: '#7CB342' }
+                ];
+                const color = pastelColors[idx % pastelColors.length];
+                const variationCount = exercise.variations?.length || 0;
+                return (
+                <Link
+                  key={exercise.id}
+                  href={`/oefening/${exercise.id}`}
+                  className="rounded-2xl shadow-gentle hover:shadow-medium transition overflow-hidden group"
+                  style={{ backgroundColor: color.bg }}
+                >
+                  <div className="h-4" style={{ backgroundColor: color.border }}></div>
+                  <div className="p-6">
+                    <h3 className="text-xl font-bold text-gray-900 group-hover:text-green-600 transition mb-2">
+                      {exercise.title}
+                    </h3>
 
-                  <p className="text-sm text-gray-600 mb-4">
-                    {exercise.description}
-                  </p>
-
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded font-semibold">
-                      {exercise.gradeLevel.replace('group-', 'Gr. ')}
-                    </span>
-                    <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded font-semibold">
-                      {exercise.exerciseType}
-                    </span>
-                    <span
-                      className={`px-2 py-1 text-xs rounded font-semibold text-white ${
-                        exercise.difficulty === 'easy'
-                          ? 'bg-green-500'
-                          : exercise.difficulty === 'medium'
-                          ? 'bg-yellow-500'
-                          : 'bg-red-500'
-                      }`}
-                    >
-                      {exercise.difficulty === 'easy'
-                        ? '⭐ Easy'
-                        : exercise.difficulty === 'medium'
-                        ? '⭐⭐ Medium'
-                        : '⭐⭐⭐ Hard'}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                    <span>🔄 {exercise.variations.length} variaties</span>
-                    <span>⏱️ {exercise.estimatedTime} min</span>
-                  </div>
-
-                  {exercise.sourceFile && (
-                    <p className="text-xs text-gray-500 mb-3">
-                      📄 Uit: {exercise.sourceFile}
+                    <p className="text-sm text-gray-600 mb-4">
+                      {exercise.description}
                     </p>
-                  )}
 
-                  <button className="w-full px-4 py-3 text-white font-bold rounded-xl transition" style={{ backgroundColor: color.border }}>
-                    Start →
-                  </button>
-                </div>
-              </Link>
-            );
-            })}
-          </div>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded font-semibold">
+                        {exercise.grade_level.replace('group-', 'Gr. ')}
+                      </span>
+                      <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded font-semibold">
+                        {exercise.exercise_type}
+                      </span>
+                      <span
+                        className={`px-2 py-1 text-xs rounded font-semibold text-white ${
+                          exercise.difficulty === 'easy'
+                            ? 'bg-green-500'
+                            : exercise.difficulty === 'medium'
+                            ? 'bg-yellow-500'
+                            : 'bg-red-500'
+                        }`}
+                      >
+                        {exercise.difficulty === 'easy'
+                          ? '⭐ Easy'
+                          : exercise.difficulty === 'medium'
+                          ? '⭐⭐ Medium'
+                          : '⭐⭐⭐ Hard'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+                      <span>🔄 {variationCount} variaties</span>
+                      <span>⏱️ {exercise.estimated_time} min</span>
+                    </div>
+
+                    {exercise.source_file && (
+                      <p className="text-xs text-gray-500 mb-3">
+                        📄 Uit: {exercise.source_file}
+                      </p>
+                    )}
+
+                    <button className="w-full px-4 py-3 text-white font-bold rounded-xl transition" style={{ backgroundColor: color.border }}>
+                      Start →
+                    </button>
+                  </div>
+                </Link>
+              );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </main>

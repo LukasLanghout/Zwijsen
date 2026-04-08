@@ -1,19 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
   getExercises,
+  getExerciseVariations,
   addExercise,
   addVariation,
   addHint,
   addWorkStep
 } from '@/lib/supabase';
 
-// GET all exercises
+// GET all exercises with variation counts
 export async function GET() {
   try {
     const exercises = await getExercises();
+
+    // Get variation count for each exercise
+    const exercisesWithVariations = await Promise.all(
+      exercises.map(async (exercise) => {
+        const variations = await getExerciseVariations(exercise.id);
+        return {
+          ...exercise,
+          variations
+        };
+      })
+    );
+
     return NextResponse.json({
       success: true,
-      exercises,
+      exercises: exercisesWithVariations,
       count: exercises.length
     });
   } catch (error) {
