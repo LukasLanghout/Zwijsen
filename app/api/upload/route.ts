@@ -52,7 +52,12 @@ export async function POST(request: NextRequest) {
         topic: exercise.topic,
         original_problem: exercise.originalProblem,
         estimated_time: exercise.estimatedTime,
-        source_file: file.name
+        source_file: file.name,
+        validation_status: 'pending',
+        editor_notes: null,
+        question_type: null,
+        validated_by: null,
+        validated_at: null
       });
 
       // Add variations
