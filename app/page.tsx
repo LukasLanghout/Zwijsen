@@ -46,19 +46,24 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-green-50 to-blue-100">
-      <header className="bg-white shadow-md border-b-4 border-green-500">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <h1 className="text-4xl font-bold text-gray-900">🧮 Zwijsen Rekenen</h1>
-          <p className="text-gray-600 mt-2">
-            Wiskundeoefeningen met AI-gegenereerde variaties
-          </p>
+    <main className="min-h-screen" style={{ background: 'linear-gradient(135deg, #f5f0ff 0%, #fff9f0 100%)' }}>
+      <header className="bg-gradient-to-r from-purple-700 via-purple-600 to-pink-600 shadow-lg border-b-4" style={{ borderColor: '#0099CC' }}>
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="text-5xl">🧮</div>
+            <div>
+              <h1 className="text-5xl font-bold text-white">Zwijsen Rekenen</h1>
+              <p className="text-blue-100 mt-2 text-lg">
+                Breng leren tot leven met interactieve oefeningen
+              </p>
+            </div>
+          </div>
         </div>
       </header>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Upload Section */}
-        <div className="bg-gradient-to-r from-green-100 to-blue-100 rounded-lg p-8 mb-12 border-2 border-green-300">
+        <div className="bg-white rounded-2xl p-8 mb-12 shadow-gentle border-l-8" style={{ borderColor: '#0099CC' }}>
           <h2 className="text-2xl font-bold text-gray-900 mb-4">📄 PDF Uploaden</h2>
           <p className="text-gray-700 mb-4">
             Upload een PDF met wiskundeoefeningen. AI extraheert en genereert automatisch
@@ -66,7 +71,7 @@ export default function Home() {
           </p>
 
           <div className="flex flex-col gap-4">
-            <label className="flex items-center justify-center w-full px-6 py-4 border-2 border-dashed border-green-400 rounded-lg cursor-pointer hover:bg-green-50 transition">
+            <label className="flex items-center justify-center w-full px-6 py-8 border-3 border-dashed rounded-2xl cursor-pointer transition" style={{ borderColor: '#6B4C9A', backgroundColor: '#f5f0ff' }}>
               <input
                 type="file"
                 accept=".pdf"
@@ -93,23 +98,23 @@ export default function Home() {
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <div className="bg-white rounded-lg shadow-lg p-6 border-t-4 border-green-500">
-            <div className="text-4xl font-bold text-green-600">
+          <div className="rounded-2xl shadow-gentle p-8 border-t-4" style={{ backgroundColor: '#B3E5FC', borderColor: '#0099CC' }}>
+            <div className="text-5xl font-bold" style={{ color: '#0099CC' }}>
               {stats.totalExercises}
             </div>
-            <div className="text-gray-600 mt-2">Totale oefeningen</div>
+            <div className="text-gray-700 mt-3 font-semibold">Totale oefeningen</div>
           </div>
-          <div className="bg-white rounded-lg shadow-lg p-6 border-t-4 border-blue-500">
-            <div className="text-4xl font-bold text-blue-600">
+          <div className="rounded-2xl shadow-gentle p-8 border-t-4" style={{ backgroundColor: '#FFB3D9', borderColor: '#C41E3A' }}>
+            <div className="text-5xl font-bold" style={{ color: '#C41E3A' }}>
               {stats.totalVariations}
             </div>
-            <div className="text-gray-600 mt-2">Variaties gegenereerd</div>
+            <div className="text-gray-700 mt-3 font-semibold">Variaties gegenereerd</div>
           </div>
-          <div className="bg-white rounded-lg shadow-lg p-6 border-t-4 border-purple-500">
-            <div className="text-4xl font-bold text-purple-600">
+          <div className="rounded-2xl shadow-gentle p-8 border-t-4" style={{ backgroundColor: '#C8E6C9', borderColor: '#7CB342' }}>
+            <div className="text-5xl font-bold" style={{ color: '#7CB342' }}>
               {stats.exerciseTypes.length}
             </div>
-            <div className="text-gray-600 mt-2">Oefening types</div>
+            <div className="text-gray-700 mt-3 font-semibold">Oefening types</div>
           </div>
         </div>
 
@@ -117,13 +122,22 @@ export default function Home() {
         <div>
           <h2 className="text-3xl font-bold text-gray-900 mb-8">✨ Oefeningen</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {exercises.map(exercise => (
+            {exercises.map((exercise, idx) => {
+              const pastelColors = [
+                { bg: '#B3E5FC', border: '#0099CC' },
+                { bg: '#FFB3D9', border: '#C41E3A' },
+                { bg: '#FFCB9A', border: '#FF9800' },
+                { bg: '#C8E6C9', border: '#7CB342' }
+              ];
+              const color = pastelColors[idx % pastelColors.length];
+              return (
               <Link
                 key={exercise.id}
                 href={`/oefening/${exercise.id}`}
-                className="bg-white rounded-lg shadow-lg hover:shadow-xl transition overflow-hidden group"
+                className="rounded-2xl shadow-gentle hover:shadow-medium transition overflow-hidden group"
+                style={{ backgroundColor: color.bg }}
               >
-                <div className="h-3 bg-gradient-to-r from-green-500 to-blue-500"></div>
+                <div className="h-4" style={{ backgroundColor: color.border }}></div>
                 <div className="p-6">
                   <h3 className="text-xl font-bold text-gray-900 group-hover:text-green-600 transition mb-2">
                     {exercise.title}
@@ -168,12 +182,13 @@ export default function Home() {
                     </p>
                   )}
 
-                  <button className="w-full px-4 py-2 bg-gradient-to-r from-green-500 to-blue-500 text-white font-bold rounded-lg hover:shadow-lg transition">
+                  <button className="w-full px-4 py-3 text-white font-bold rounded-xl transition" style={{ backgroundColor: color.border }}>
                     Start →
                   </button>
                 </div>
               </Link>
-            ))}
+            );
+            })}
           </div>
         </div>
       </div>

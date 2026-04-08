@@ -51,10 +51,10 @@ export default function ExercisePage({ params }: ExercisePageProps) {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-green-50 to-blue-100">
-      <header className="bg-white shadow-md border-b-4 border-green-500">
+    <main className="min-h-screen" style={{ background: 'linear-gradient(135deg, #f5f0ff 0%, #fff9f0 100%)' }}>
+      <header className="bg-gradient-to-r from-purple-700 via-purple-600 to-pink-600 shadow-lg" style={{ borderBottom: '4px solid #0099CC' }}>
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <Link href="/" className="text-green-600 hover:text-green-700 font-semibold">
+          <Link href="/" className="text-white hover:text-blue-100 font-semibold text-lg">
             ← Terug naar overzicht
           </Link>
         </div>
@@ -92,7 +92,7 @@ export default function ExercisePage({ params }: ExercisePageProps) {
         </div>
 
         {/* Main Exercise Card */}
-        <div className="bg-white rounded-lg shadow-lg p-8 mb-8 border-2 border-green-200">
+        <div className="bg-white rounded-2xl shadow-medium p-8 mb-8 border-l-8" style={{ borderColor: '#0099CC' }}>
           {/* Variation Counter */}
           <div className="mb-6 flex items-center justify-between">
             <div className="text-sm font-semibold text-gray-600">
@@ -111,8 +111,8 @@ export default function ExercisePage({ params }: ExercisePageProps) {
           </div>
 
           {/* Problem */}
-          <div className="bg-green-50 rounded-lg p-6 mb-8 border-2 border-green-200">
-            <p className="text-3xl font-bold text-gray-900 text-center">
+          <div className="rounded-2xl p-8 mb-8 border-2 border-dashed text-center" style={{ backgroundColor: '#f5f0ff', borderColor: '#6B4C9A' }}>
+            <p className="text-4xl font-bold text-gray-900">
               {variation.problem}
             </p>
           </div>
@@ -147,7 +147,8 @@ export default function ExercisePage({ params }: ExercisePageProps) {
               <button
                 onClick={handleSubmit}
                 disabled={!userAnswer.trim()}
-                className="w-full px-6 py-3 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 disabled:from-gray-300 disabled:to-gray-300 text-white font-bold rounded-lg transition"
+                className="w-full px-6 py-3 text-white font-bold rounded-xl transition"
+                style={{ backgroundColor: !userAnswer.trim() ? '#ccc' : '#0099CC' }}
               >
                 ✓ Controleer Antwoord
               </button>
