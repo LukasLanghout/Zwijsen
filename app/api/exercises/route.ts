@@ -65,7 +65,12 @@ export async function POST(request: NextRequest) {
       topic,
       original_problem,
       estimated_time: estimated_time || 10,
-      source_file
+      source_file,
+      validation_status: 'pending',
+      editor_notes: null,
+      question_type: null,
+      validated_by: null,
+      validated_at: null
     });
 
     // Add variations with hints and work steps
