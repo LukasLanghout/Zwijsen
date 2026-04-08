@@ -31,6 +31,11 @@ export interface ExerciseRow {
   source_file: string | null;
   created_at: string;
   updated_at: string;
+  validation_status: 'pending' | 'approved' | 'rejected' | 'needs_review';
+  editor_notes: string | null;
+  question_type: string | null;
+  validated_by: string | null;
+  validated_at: string | null;
 }
 
 export interface VariationRow {
@@ -244,5 +249,96 @@ export async function addWorkStep(step: Omit<WorkStepRow, 'id'>) {
   } catch (err) {
     console.error('Error adding work step:', err);
     throw err;
+  }
+}
+
+// Validation functions
+export async function getExercisesByStatus(status: string) {
+  const client = getSupabaseClient();
+  if (!client) return [];
+
+  try {
+    const { data, error } = await client
+      .from('exercises')
+      .select('*')
+      .eq('validation_status', status)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching exercises by status:', error);
+      return [];
+    }
+
+    return (data || []) as ExerciseRow[];
+  } catch (err) {
+    console.error('Exception fetching exercises by status:', err);
+    return [];
+  }
+}
+
+export async function updateExerciseValidation(
+  id: string,
+  updates: {
+    validation_status?: 'pending' | 'approved' | 'rejected' | 'needs_review';
+    editor_notes?: string | null;
+    question_type?: string | null;
+    title?: string;
+    description?: string;
+  }
+) {
+  const client = getSupabaseClient();
+  if (!client) return null;
+
+  try {
+    const { data, error } = await client
+      .from('exercises')
+      .update({
+        ...updates,
+        validated_at: updates.validation_status ? new Date().toISOString() : undefined
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating exercise validation:', error);
+      return null;
+    }
+
+    return data as ExerciseRow;
+  } catch (err) {
+    console.error('Exception updating exercise validation:', err);
+    return null;
+  }
+}
+
+export async function updateVariationDetails(
+  id: string,
+  updates: {
+    problem?: string;
+    correct_answer?: string;
+    explanation?: string;
+  }
+) {
+  const client = getSupabaseClient();
+  if (!client) return null;
+
+  try {
+    const { data, error } = await client
+      .from('variations')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating variation:', error);
+      return null;
+    }
+
+    return data as VariationRow;
+  } catch (err) {
+    console.error('Exception updating variation:', err);
+    return null;
   }
 }
