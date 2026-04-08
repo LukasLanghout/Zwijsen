@@ -5,6 +5,7 @@ import {
   addHint,
   addWorkStep
 } from '@/lib/supabase';
+import { generateExercisesWithHF, generateExercisePrompt } from '@/lib/huggingface';
 
 export async function POST(request: NextRequest) {
   try {
@@ -114,6 +115,27 @@ async function extractExercisesFromPDF(
   fileSize: number
 ): Promise<{ exercises: any[] }> {
   try {
+    const hfApiKey = process.env.HUGGING_FACE_API_KEY;
+
+    // If HF API key is available, use it
+    if (hfApiKey) {
+      try {
+        const prompt = generateExercisePrompt(fileName);
+        const result = await generateExercisesWithHF(prompt);
+
+        // Extract JSON from response
+        const jsonMatch = result.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          return { exercises: parsed.exercises || [] };
+        }
+      } catch (hfError) {
+        console.warn('HF API failed, using fallback:', hfError);
+        // Fall through to fallback
+      }
+    }
+
+    // Fallback: Generate sample exercises based on filename
     const newExercises: any[] = [];
     const isVierkanten = fileName.toLowerCase().includes('vierkant');
 
@@ -141,12 +163,6 @@ async function extractExercisesFromPDF(
             explanation: '4×4=16 is het grootste vierkant, 20-16=4 tegels over',
             hints: ['4×4=16', '20-16=4'],
             workSteps: ['Bereken: 4×4=16', 'Trek af: 20-16=4', 'Antwoord: 4 tegels over']
-          },
-          {
-            problem: 'Teken een vierkant van 9 hokjes en een van 16 hokjes',
-            correctAnswer: '3×3=9 en 4×4=16',
-            explanation: 'Je maakt een 3×3 vierkant (9 hokjes) en een 4×4 vierkant (16 hokjes)',
-            hints: ['3×3=9', '4×4=16']
           }
         ]
       };
