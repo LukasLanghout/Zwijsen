@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { addExercise, getExercises } from '@/lib/db';
-import { Exercise } from '@/lib/types';
-
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+import {
+  addExercise,
+  addVariation,
+  addHint,
+  addWorkStep
+} from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,12 +39,62 @@ export async function POST(request: NextRequest) {
       file.size
     );
 
+    // Save to Supabase
+    const savedExercises = [];
+    for (const exercise of extractionResult.exercises) {
+      const savedExercise = await addExercise({
+        title: exercise.title,
+        description: exercise.description,
+        exercise_type: exercise.exerciseType,
+        grade_level: exercise.gradeLevel,
+        difficulty: exercise.difficulty,
+        topic: exercise.topic,
+        original_problem: exercise.originalProblem,
+        estimated_time: exercise.estimatedTime,
+        source_file: file.name
+      });
+
+      // Add variations
+      for (const variation of exercise.variations) {
+        const savedVariation = await addVariation({
+          exercise_id: savedExercise.id,
+          problem: variation.problem,
+          correct_answer: String(variation.correctAnswer),
+          explanation: variation.explanation
+        });
+
+        // Add hints
+        if (variation.hints) {
+          for (let i = 0; i < variation.hints.length; i++) {
+            await addHint({
+              variation_id: savedVariation.id,
+              hint_text: variation.hints[i],
+              hint_order: i
+            });
+          }
+        }
+
+        // Add work steps
+        if (variation.workSteps) {
+          for (let i = 0; i < variation.workSteps.length; i++) {
+            await addWorkStep({
+              variation_id: savedVariation.id,
+              step_text: variation.workSteps[i],
+              step_order: i
+            });
+          }
+        }
+      }
+
+      savedExercises.push(savedExercise);
+    }
+
     return NextResponse.json({
       success: true,
       fileName: file.name,
-      exercises: extractionResult.exercises,
-      totalExtracted: extractionResult.exercises.length,
-      message: `✅ ${extractionResult.exercises.length} oefeningen geëxtraheerd!`
+      exercises: savedExercises,
+      totalExtracted: savedExercises.length,
+      message: `✅ ${savedExercises.length} oefeningen opgeslagen in Supabase!`
     });
 
   } catch (error) {
@@ -60,26 +112,13 @@ export async function POST(request: NextRequest) {
 async function extractExercisesFromPDF(
   fileName: string,
   fileSize: number
-): Promise<{ exercises: Exercise[] }> {
-  // For PoC: Generate sample exercises based on filename
-  // In production: Use OCR/PDF parsing library + Gemini API
-
+): Promise<{ exercises: any[] }> {
   try {
-    // Generate vierkanten exercises based on filename
-    const newExercises: Exercise[] = [];
-
-    // Parse filename to detect exercise type
+    const newExercises: any[] = [];
     const isVierkanten = fileName.toLowerCase().includes('vierkant');
-    const isOptellen = fileName.toLowerCase().includes('optel') || fileName.toLowerCase().includes('+');
-    const isAftrekken = fileName.toLowerCase().includes('aftrek') || fileName.toLowerCase().includes('-');
-    const isKeersom = fileName.toLowerCase().includes('keer') || fileName.toLowerCase().includes('×');
-    const isDelen = fileName.toLowerCase().includes('deel') || fileName.toLowerCase().includes('÷');
 
-    // Generate 1-3 exercises based on file content hints
     if (isVierkanten || fileName.toLowerCase().includes('grid') || fileName.toLowerCase().includes('square')) {
-      // Add a vierkanten exercise
-      const vierkantExercise: Exercise = {
-        id: `pdf-${Date.now()}-0`,
+      const vierkantExercise: any = {
         title: `Vierkanten van ${fileName.replace('.pdf', '')}`,
         description: 'Oefening geëxtraheerd uit PDF',
         exerciseType: 'mixed',
@@ -87,9 +126,9 @@ async function extractExercisesFromPDF(
         difficulty: 'medium',
         topic: 'Vierkanten',
         originalProblem: 'Werk met vierkanten',
+        estimatedTime: 15,
         variations: [
           {
-            id: 'v1',
             problem: 'Welke getallen kun je als perfect vierkant tekenen (1-25)?',
             correctAnswer: '1, 4, 9, 16, 25',
             explanation: '1×1=1, 2×2=4, 3×3=9, 4×4=16, 5×5=25',
@@ -97,7 +136,6 @@ async function extractExercisesFromPDF(
             workSteps: ['1×1=1', '2×2=4', '3×3=9', '4×4=16', '5×5=25']
           },
           {
-            id: 'v2',
             problem: 'Pak 20 tegels, maak het grootste vierkant. Hoeveel over?',
             correctAnswer: '4 tegels over (4×4=16, 20-16=4)',
             explanation: '4×4=16 is het grootste vierkant, 20-16=4 tegels over',
@@ -105,69 +143,38 @@ async function extractExercisesFromPDF(
             workSteps: ['Bereken: 4×4=16', 'Trek af: 20-16=4', 'Antwoord: 4 tegels over']
           },
           {
-            id: 'v3',
             problem: 'Teken een vierkant van 9 hokjes en een van 16 hokjes',
             correctAnswer: '3×3=9 en 4×4=16',
             explanation: 'Je maakt een 3×3 vierkant (9 hokjes) en een 4×4 vierkant (16 hokjes)',
             hints: ['3×3=9', '4×4=16']
           }
-        ],
-        estimatedTime: 15,
-        sourceFile: fileName,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        ]
       };
       newExercises.push(vierkantExercise);
     }
 
-    // If no specific type detected or if just a generic PDF
     if (newExercises.length === 0) {
-      // Return a generic math exercise
-      const genericExercise: Exercise = {
-        id: `pdf-${Date.now()}-0`,
+      const genericExercise: any = {
         title: `Rekenen: ${fileName.replace('.pdf', '')}`,
-        description: 'Oefening geëxtraheerd uit PDF - graag manual review',
+        description: 'Oefening geëxtraheerd uit PDF',
         exerciseType: 'mixed',
         gradeLevel: 'group-4',
         difficulty: 'easy',
         topic: 'Rekenen',
         originalProblem: 'PDF-oefening',
+        estimatedTime: 10,
         variations: [
           {
-            id: 'v1',
             problem: '5 + 3 = ?',
             correctAnswer: 8,
             explanation: '5 + 3 = 8',
             hints: ['Tel aan: 5, 6, 7, 8'],
             workSteps: ['Start bij 5', 'Tel 3 verder', 'Antwoord: 8']
-          },
-          {
-            id: 'v2',
-            problem: '9 - 4 = ?',
-            correctAnswer: 5,
-            explanation: '9 - 4 = 5',
-            hints: ['Tel terug: 9, 8, 7, 6, 5'],
-            workSteps: ['Start bij 9', 'Tel 4 terug', 'Antwoord: 5']
-          },
-          {
-            id: 'v3',
-            problem: '6 × 2 = ?',
-            correctAnswer: 12,
-            explanation: '6 × 2 = 12',
-            hints: ['6 + 6 = 12'],
-            workSteps: ['6 twee keer', 'Antwoord: 12']
           }
-        ],
-        estimatedTime: 10,
-        sourceFile: fileName,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        ]
       };
       newExercises.push(genericExercise);
     }
-
-    // Save to database
-    newExercises.forEach(ex => addExercise(ex));
 
     return { exercises: newExercises };
   } catch (error) {
