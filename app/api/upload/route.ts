@@ -71,33 +71,43 @@ async function extractExercisesFromPDF(
           {
             parts: [
               {
-                text: `Je bent een expert in het analyseren van wiskundeoefeningen uit PDF-bestanden.
+                text: `Je bent een expert in het analyseren van Nederlandse wiskundeoefeningen uit PDF-bestanden.
 
 Analyze de volgende PDF-inhoud en extract alle wiskundeoefeningen.
+
+BELANGRIJK voor "Vierkanten" oefeningen:
+- Dit zijn grid-based oefeningen (perfect squares, rechthoeken)
+- Getallen die als vierkant kunnen: 1, 4, 9, 16, 25, etc.
+- Oefeningen met tegels/hokjes intekenen
 
 Voor elke oefening:
 1. Identify het type (addition, subtraction, multiplication, division, mixed, word-problem)
 2. Bepaal het niveau (group-3 tot group-8)
 3. Bepaal moeilijkheid (easy, medium, hard)
-4. Genereer 2-3 variaties van dezelfde oefening
+4. Genereer EXACT 3 variaties met:
+   - Verschillende moeilijkheidsgraden
+   - Verschillende getallen (maar zelfde type vraag)
+   - Duidelijke hints
+   - Stap-voor-stap uitleg (workSteps)
 
-Return JSON format:
+Return VALID JSON format:
 {
   "exercises": [
     {
       "title": "...",
       "description": "...",
       "exerciseType": "addition|subtraction|multiplication|division|mixed|word-problem",
-      "gradeLevel": "group-3...group-8",
+      "gradeLevel": "group-3|group-4|group-5|group-6|group-7|group-8",
       "difficulty": "easy|medium|hard",
-      "topic": "...",
+      "topic": "Vierkanten|Optellen|Aftrekken|etc",
       "originalProblem": "...",
       "variations": [
         {
-          "problem": "...",
+          "problem": "Vraag...",
           "correctAnswer": 5,
-          "explanation": "...",
-          "hints": ["...", "..."]
+          "explanation": "Uitleg",
+          "hints": ["Hint 1", "Hint 2"],
+          "workSteps": ["Stap 1", "Stap 2"]
         }
       ]
     }
