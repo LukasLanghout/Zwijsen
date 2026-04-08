@@ -43,7 +43,7 @@ export default function Home() {
           setStats({
             totalExercises: exercisesList.length,
             totalVariations: totalVars,
-            exerciseTypes: Array.from(uniqueTypes)
+            exerciseTypes: Array.from(uniqueTypes) as string[]
           });
         }
       } catch (error) {
@@ -93,7 +93,7 @@ export default function Home() {
           setStats({
             totalExercises: exercisesList.length,
             totalVariations: totalVars,
-            exerciseTypes: Array.from(uniqueTypes)
+            exerciseTypes: Array.from(uniqueTypes) as string[]
           });
           setUploadMessage('');
         }
