@@ -2,7 +2,8 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  // Force Vercel rebuild
+  // pdf-parse uses CommonJS and needs to be bundled server-side only
+  serverExternalPackages: ['pdf-parse'],
   onDemandEntries: {
     maxInactiveAge: 15 * 1000,
     pagesBufferLength: 2,
