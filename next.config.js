@@ -2,8 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  // pdf-parse uses CommonJS and needs to be bundled server-side only
-  serverExternalPackages: ['pdf-parse'],
+  experimental: {
+    serverComponentsExternalPackages: ['pdf-parse'],
+  },
   onDemandEntries: {
     maxInactiveAge: 15 * 1000,
     pagesBufferLength: 2,
